@@ -1,4 +1,4 @@
-# Epstein Drive Physics Sandbox
+# Epstein Drive Physics Sandbox (The Expanse)
 
 A browser-based physics simulator for space travel in the universe of *The Expanse* TV show and book series.
 I’m a huge fan of The Expanse, so I built this as a fun way to explore Epstein drive travel, flip-and-burn trajectories, and the scale of the Solar System through the lens of the series.
