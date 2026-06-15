@@ -269,6 +269,7 @@
   <button class="btn" id="btn-orbits">▶ Animate Orbits</button>
   <button class="btn" id="btn-flight">▶ Simulate Flight</button>
   <button class="btn" id="btn-events" onclick="toggleEvents()">Expanse Events</button>
+  <button class="btn" id="btn-factions" onclick="toggleFactions()">Faction Zones</button>
 </div>
 <div id="main">
   <div id="left-sidebar">
@@ -395,6 +396,7 @@ let state = {
   flightStart: null,
   rafId: null,
   showEvents: false,
+  showFactions: false,
   dragging: false,
   dragStartX: 0,
   dragStartY: 0,
@@ -508,6 +510,50 @@ function drawScene(now) {
   ctx.arc(cx, cy, beltOuter, 0, 2 * PI);
   ctx.arc(cx, cy, beltInner, 0, 2 * PI, true);
   ctx.fill();
+
+  // Faction territory zones
+  if (state.showFactions) {
+    // OPA Belt full ring 2.0-3.5 AU
+    const opaInner = 2.0 * sc, opaOuter = 3.5 * sc;
+    const opaGrad = ctx.createRadialGradient(cx, cy, opaInner, cx, cy, opaOuter);
+    opaGrad.addColorStop(0, 'rgba(232,160,48,0)');
+    opaGrad.addColorStop(0.4, 'rgba(232,160,48,0.06)');
+    opaGrad.addColorStop(1, 'rgba(232,160,48,0)');
+    ctx.fillStyle = opaGrad;
+    ctx.beginPath(); ctx.arc(cx, cy, opaOuter, 0, 2*PI); ctx.fill();
+
+    // UN region arc around Earth ~0-1.8 AU partial
+    const unOuter = 1.8 * sc;
+    const earthAngle = bodyAngle(BODIES.find(b => b.id === 'earth'));
+    const unGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, unOuter);
+    unGrad.addColorStop(0, 'rgba(74,144,226,0)');
+    unGrad.addColorStop(0.7, 'rgba(74,144,226,0.05)');
+    unGrad.addColorStop(1, 'rgba(74,144,226,0)');
+    ctx.fillStyle = unGrad;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, unOuter, earthAngle - 0.8, earthAngle + 0.8);
+    ctx.closePath(); ctx.fill();
+
+    // MCRN arc around Mars 1.4-1.8 AU
+    const marsAngle = bodyAngle(BODIES.find(b => b.id === 'mars'));
+    const mcrnInner = 1.3 * sc, mcrnOuter = 1.8 * sc;
+    const mcrnGrad = ctx.createRadialGradient(cx, cy, mcrnInner, cx, cy, mcrnOuter);
+    mcrnGrad.addColorStop(0, 'rgba(193,68,14,0)');
+    mcrnGrad.addColorStop(0.5, 'rgba(193,68,14,0.07)');
+    mcrnGrad.addColorStop(1, 'rgba(193,68,14,0)');
+    ctx.fillStyle = mcrnGrad;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, mcrnOuter, marsAngle - 0.7, marsAngle + 0.7);
+    ctx.closePath(); ctx.fill();
+
+    // Outer planets 4+ AU
+    const opInner = 4 * sc, opOuter = 32 * sc;
+    const opGrad = ctx.createRadialGradient(cx, cy, opInner, cx, cy, opOuter);
+    opGrad.addColorStop(0, 'rgba(100,60,180,0.03)');
+    opGrad.addColorStop(1, 'rgba(100,60,180,0)');
+    ctx.fillStyle = opGrad;
+    ctx.beginPath(); ctx.arc(cx, cy, opOuter, 0, 2*PI); ctx.fill();
+  }
 
   // Orbit rings
   ctx.setLineDash([2, 6]);
@@ -1316,6 +1362,11 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'f' || e.key === 'F') toggleFlight();
   if (e.key === 'r' || e.key === 'R') { state.zoom = 1; state.panX = 0; state.panY = 0; }
 });
+
+function toggleFactions() {
+  state.showFactions = !state.showFactions;
+  document.getElementById('btn-factions').classList.toggle('active', state.showFactions);
+}
 
 function toggleEvents() {
   state.showEvents = !state.showEvents;
