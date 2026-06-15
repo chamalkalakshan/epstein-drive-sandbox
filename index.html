@@ -864,6 +864,15 @@ function updateFlightPanel() {
     <canvas id="vel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
   </div>`;
 
+  const lightLag = calc.dist_m / C;
+  const lagClass = lightLag > 60 ? 'warn' : 'ok';
+  const lagNote = lightLag > 60 ? 'Real-time comms impossible' : 'Near-real-time';
+  html += `<div class="panel-section"><h3>Comms Delay</h3>
+    <div class="info-row"><span class="info-key">Signal lag (one-way)</span><span class="info-val">${formatTime(lightLag)}</span></div>
+    <div class="info-row"><span class="info-key">Round-trip delay</span><span class="info-val">${formatTime(lightLag * 2)}</span></div>
+    <div class="info-row"><span class="info-key">Status</span><span class="info-val ${lagClass}">${lagNote}</span></div>
+  </div>`;
+
   const GM_sun = 1.327e20;
   const r1_m = calc.ob.sma * AU, r2_m = calc.db.sma * AU || AU * 0.1;
   const a_transfer = (r1_m + r2_m) / 2;
