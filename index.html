@@ -981,6 +981,19 @@ function updateFlightPanel() {
     <canvas id="vel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
   </div>`;
 
+  const avgDist = (calc.ob.sma + calc.db.sma) / 2;
+  const radRate = avgDist < 2 ? 0.1 : avgDist < 5 ? 0.5 : 1.0;
+  const totalDose = radRate * (calc.t_total / 86400);
+  const radClass = totalDose < 50 ? 'ok' : totalDose < 200 ? 'warn' : 'warn';
+  const isOPA = calc.ob.faction === 'opa' || calc.db.faction === 'opa';
+  html += `<div class="panel-section"><h3>Radiation Exposure</h3>
+    <div class="info-row"><span class="info-key">GCR dose rate</span><span class="info-val">${radRate.toFixed(1)} mSv/day</span></div>
+    <div class="info-row"><span class="info-key">Total dose</span><span class="info-val ${radClass}">${totalDose.toFixed(1)} mSv</span></div>
+    <div class="info-row"><span class="info-key">Annual limit</span><span class="info-val">50 mSv/yr</span></div>
+    <div class="info-row"><span class="info-key">% of annual limit</span><span class="info-val ${radClass}">${((totalDose/50)*100).toFixed(1)}%</span></div>
+    ${isOPA ? `<div class="info-row" style="font-size:10px;color:#E8A030;margin-top:4px;">Belters exceed annual limits routinely.</div>` : ''}
+  </div>`;
+
   const GM_BODIES = { earth:3.986e14, luna:3.986e14, mars:4.282e13, jupiter:1.267e17, ganymede:1.267e17, europa:1.267e17, saturn:3.793e16, titan:3.793e16, uranus:5.794e15, neptune:6.836e15 };
   const gm_dest = GM_BODIES[calc.db.id] || 1e12;
   const park_alt = 200e3; // 200km
