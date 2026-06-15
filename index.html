@@ -864,6 +864,21 @@ function updateFlightPanel() {
     <canvas id="vel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
   </div>`;
 
+  const GM_sun = 1.327e20;
+  const r1_m = calc.ob.sma * AU, r2_m = calc.db.sma * AU || AU * 0.1;
+  const a_transfer = (r1_m + r2_m) / 2;
+  const t_hoh = PI * Math.sqrt(Math.pow(a_transfer, 3) / GM_sun);
+  const chem_isp = 450;
+  const chem_ve = chem_isp * G0;
+  const chem_dv = calc.dv_total;
+  const speedRatio = t_hoh / calc.t_total;
+  html += `<div class="panel-section"><h3>vs Chemical Rocket</h3>
+    <div class="info-row"><span class="info-key">Hohmann time</span><span class="info-val">${formatTime(t_hoh)}</span></div>
+    <div class="info-row"><span class="info-key">Chem dv needed</span><span class="info-val">${(chem_dv/1000).toFixed(1)} km/s</span></div>
+    <div class="info-row"><span class="info-key">Chem Isp</span><span class="info-val">~450 s (kerosene)</span></div>
+    <div class="info-row"><span class="info-key">Epstein advantage</span><span class="info-val highlight">${speedRatio.toFixed(0)}x faster</span></div>
+  </div>`;
+
   html += `<div class="panel-section"><h3>Propellant Remaining</h3>
     <canvas id="fuel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
   </div>`;
