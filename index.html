@@ -1203,23 +1203,40 @@ function updateFlightPanel() {
   const avgDist = (calc.ob.sma + calc.db.sma) / 2;
   const radRate = avgDist < 2 ? 0.1 : avgDist < 5 ? 0.5 : 1.0;
   const totalDose = radRate * (calc.t_total / 86400);
-  const radClass = totalDose < 50 ? 'ok' : totalDose < 200 ? 'warn' : 'warn';
+  const radClass = totalDose < 50 ? 'ok' : 'warn';
+  const radDanger = totalDose >= 200;
   const isOPA = calc.ob.faction === 'opa' || calc.db.faction === 'opa';
   html += `<div class="panel-section"><h3>Radiation Exposure</h3>
     <div class="info-row"><span class="info-key">GCR dose rate</span><span class="info-val">${radRate.toFixed(1)} mSv/day</span></div>
     <div class="info-row"><span class="info-key">Total dose</span><span class="info-val ${radClass}">${totalDose.toFixed(1)} mSv</span></div>
     <div class="info-row"><span class="info-key">Annual limit</span><span class="info-val">50 mSv/yr</span></div>
     <div class="info-row"><span class="info-key">% of annual limit</span><span class="info-val ${radClass}">${((totalDose/50)*100).toFixed(1)}%</span></div>
+    ${radDanger ? `<div class="info-row" style="font-size:10px;color:#FF4444;margin-top:2px;">WARNING: acute radiation syndrome risk</div>` : ''}
     ${isOPA ? `<div class="info-row" style="font-size:10px;color:#E8A030;margin-top:4px;">Belters exceed annual limits routinely.</div>` : ''}
   </div>`;
 
-  const GM_BODIES = { earth:3.986e14, luna:3.986e14, mars:4.282e13, jupiter:1.267e17, ganymede:1.267e17, europa:1.267e17, saturn:3.793e16, titan:3.793e16, uranus:5.794e15, neptune:6.836e15 };
-  const gm_dest = GM_BODIES[calc.db.id] || 1e12;
-  const park_alt = 200e3; // 200km
-  const r_body_approx = 6.4e6; // avg radius placeholder
-  const r_orbit = r_body_approx + park_alt;
-  const v_circ = Math.sqrt(gm_dest / r_orbit);
-  const dv_insert = Math.abs(calc.v_max - v_circ);
+  const GM_BODIES = {
+    sun:1.327e20, mercury:2.203e13, venus:3.249e14,
+    earth:3.986e14, luna:4.904e12, mars:4.282e13,
+    eros:4.464e5, ceres:6.263e10, tycho:6.263e10, pallas:1.4e10, vesta:1.78e10,
+    jupiter:1.267e17, ganymede:9.887e12, europa:3.202e12,
+    saturn:3.793e16, titan:8.978e12,
+    uranus:5.794e15, neptune:6.836e15, ring:0
+  };
+  const BODY_RADII = {
+    sun:695700e3, mercury:2439e3, venus:6051e3,
+    earth:6371e3, luna:1737e3, mars:3390e3,
+    eros:8e3, ceres:473e3, tycho:5e3, pallas:256e3, vesta:263e3,
+    jupiter:71492e3, ganymede:2634e3, europa:1561e3,
+    saturn:60268e3, titan:2575e3,
+    uranus:25559e3, neptune:24764e3, ring:500e3
+  };
+  const gm_dest = GM_BODIES[calc.db.id] || 1e10;
+  const park_alt = 200e3;
+  const r_body = BODY_RADII[calc.db.id] || 3000e3;
+  const r_orbit = r_body + park_alt;
+  const v_circ = gm_dest > 1e8 ? Math.sqrt(gm_dest / r_orbit) : 0;
+  const dv_insert = v_circ;
   const total_mission_dv = calc.dv_total + dv_insert;
   html += `<div class="panel-section"><h3>Orbital Insertion</h3>
     <div class="info-row"><span class="info-key">Circular orbit vel</span><span class="info-val">${(v_circ/1000).toFixed(2)} km/s</span></div>
@@ -1256,12 +1273,7 @@ function updateFlightPanel() {
     <canvas id="fuel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
   </div>`;
 
-  document.getElementById('empty-panel').style.display = 'none';
-  document.getElementById('flight-panel').style.display = 'block';
-  document.getElementById('flight-panel').innerHTML = html;
-
   if (state.waypoints.length > 0) {
-    const legs = [];
     const stops = [state.origin, ...state.waypoints, state.dest];
     let totalTime = 0;
     let legsHtml = '';
@@ -1292,6 +1304,10 @@ function updateFlightPanel() {
   </div>`;
 
   html += `<div style="margin-top:8px;"><button class="btn" style="width:100%;font-size:10px;" onclick="shareRoute()">Share Route</button><div id="share-msg" style="color:#44DD88;font-size:10px;text-align:center;height:14px;"></div></div>`;
+
+  document.getElementById('empty-panel').style.display = 'none';
+  document.getElementById('flight-panel').style.display = 'block';
+  document.getElementById('flight-panel').innerHTML = html;
 
   drawVelocityChart(calc);
   drawFuelChart(calc);
