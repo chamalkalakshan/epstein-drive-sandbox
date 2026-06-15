@@ -273,6 +273,10 @@
   <div id="left-sidebar">
     <div class="sidebar-title">Navigation Bodies</div>
     <div id="body-list"></div>
+    <div style="padding:4px 8px;">
+      <button class="btn" id="btn-waypoint" style="width:100%;font-size:10px;" onclick="toggleWaypointMode()">+ Add Waypoint</button>
+      <div id="waypoint-list" style="margin-top:4px;font-size:10px;color:#606080;"></div>
+    </div>
     <div id="controls">
       <div class="ctrl-row">
         <div class="ctrl-label"><span>Ship Preset</span></div>
@@ -371,6 +375,8 @@ let state = {
   fuelRatio: 5,
   origin: null,
   dest: null,
+  waypoints: [],
+  addingWaypoint: false,
   zoom: 1,
   panX: 0,
   panY: 0,
@@ -600,6 +606,33 @@ function drawScene(now) {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
+    }
+  }
+
+  // Multi-leg waypoint arcs
+  if (state.waypoints.length > 0 && state.origin && state.dest) {
+    const legColors = ['rgba(255,140,0,0.7)', 'rgba(255,80,40,0.7)', 'rgba(230,210,0,0.7)'];
+    const stops = [state.origin, ...state.waypoints, state.dest];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const ob2 = BODIES.find(b => b.id === stops[i]);
+      const db2 = BODIES.find(b => b.id === stops[i + 1]);
+      if (!ob2 || !db2) continue;
+      const op2 = bodyPos(ob2), dp2 = bodyPos(db2);
+      const os2 = wts(op2.x, op2.y), ds2 = wts(dp2.x, dp2.y);
+      const midX2 = (os2.x + ds2.x) / 2, midY2 = (os2.y + ds2.y) / 2;
+      const chord2 = Math.sqrt((ds2.x - os2.x) ** 2 + (ds2.y - os2.y) ** 2);
+      const vx2 = midX2 - cx, vy2 = midY2 - cy;
+      const vLen2 = Math.sqrt(vx2 * vx2 + vy2 * vy2) || 1;
+      const cp2x = midX2 + (vx2 / vLen2) * chord2 * 0.2;
+      const cp2y = midY2 + (vy2 / vLen2) * chord2 * 0.2;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = legColors[i] || legColors[0];
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(os2.x, os2.y);
+      ctx.quadraticCurveTo(cp2x, cp2y, ds2.x, ds2.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
   }
 
@@ -911,6 +944,24 @@ function updateFlightPanel() {
   document.getElementById('flight-panel').style.display = 'block';
   document.getElementById('flight-panel').innerHTML = html;
 
+  if (state.waypoints.length > 0) {
+    const legs = [];
+    const stops = [state.origin, ...state.waypoints, state.dest];
+    let totalTime = 0;
+    let legsHtml = '';
+    for (let i = 0; i < stops.length - 1; i++) {
+      const leg = computeLeg(stops[i], stops[i + 1]);
+      if (leg) {
+        totalTime += leg.t_total;
+        legsHtml += `<div class="info-row"><span class="info-key">Leg ${i+1}: ${leg.ob.name.split(' ')[0]} to ${leg.db.name.split(' ')[0]}</span><span class="info-val">${formatTime(leg.t_total)}</span></div>`;
+      }
+    }
+    html += `<div class="panel-section"><h3>Multi-Leg Journey</h3>
+      ${legsHtml}
+      <div class="info-row" style="border-top:1px solid #1E2030;padding-top:4px;margin-top:2px;"><span class="info-key">Total journey</span><span class="info-val highlight">${formatTime(totalTime)}</span></div>
+    </div>`;
+  }
+
   drawVelocityChart(calc);
   drawFuelChart(calc);
 }
@@ -1057,18 +1108,70 @@ function drawFuelChart(calc) {
   c.fillText(formatTime(t_total), PAD.l + cW - 20, PAD.t + cH + 10);
 }
 
+function toggleWaypointMode() {
+  if (state.waypoints.length >= 2) {
+    state.waypoints = [];
+    updateWaypointList();
+    return;
+  }
+  state.addingWaypoint = true;
+  document.getElementById('btn-waypoint').textContent = 'Click a body...';
+  document.getElementById('btn-waypoint').classList.add('active');
+}
+
+function updateWaypointList() {
+  const el = document.getElementById('waypoint-list');
+  if (!el) return;
+  if (state.waypoints.length === 0) {
+    el.textContent = '';
+    document.getElementById('btn-waypoint').textContent = '+ Add Waypoint';
+    document.getElementById('btn-waypoint').classList.remove('active');
+    return;
+  }
+  el.innerHTML = state.waypoints.map((id, i) => {
+    const b = BODIES.find(x => x.id === id);
+    return `<div style="color:#E8A030">WP${i+1}: ${b ? b.name : id}</div>`;
+  }).join('') + `<span style="cursor:pointer;color:#FF4444;" onclick="state.waypoints=[];updateWaypointList();">[clear]</span>`;
+  document.getElementById('btn-waypoint').textContent = state.waypoints.length >= 2 ? 'Clear Waypoints' : '+ Add Waypoint';
+}
+
+function computeLeg(fromId, toId) {
+  const ob = BODIES.find(b => b.id === fromId);
+  const db = BODIES.find(b => b.id === toId);
+  if (!ob || !db) return null;
+  const op = bodyPos(ob), dp = bodyPos(db);
+  const dist_au = Math.sqrt((op.x - dp.x) ** 2 + (op.y - dp.y) ** 2);
+  const dist_m = dist_au * AU;
+  const a = state.thrust * G0;
+  const t_total = 2 * Math.sqrt(dist_m / a);
+  const v_max = a * (t_total / 2);
+  const dv_total = 2 * v_max;
+  return { dist_au, t_total, v_max, dv_total, ob, db };
+}
+
 function selectBody(id) {
+  if (state.addingWaypoint) {
+    if (id !== state.origin && !state.waypoints.includes(id) && state.waypoints.length < 2) {
+      state.waypoints.push(id);
+    }
+    state.addingWaypoint = false;
+    updateWaypointList();
+    buildBodyList();
+    return;
+  }
   if (!state.origin || (state.origin && state.dest)) {
     state.origin = id;
     state.dest = null;
+    state.waypoints = [];
     state.flightAnim = false;
     state.flightT = 0;
     updateTimeline(0);
-    document.getElementById('elapsed').textContent = '— not simulating —';
+    document.getElementById('elapsed').textContent = 'not simulating';
     document.getElementById('btn-flight').classList.remove('active');
     document.getElementById('btn-flight').textContent = '▶ Simulate Flight';
     document.getElementById('empty-panel').style.display = 'block';
     document.getElementById('flight-panel').style.display = 'none';
+    updateWaypointList();
   } else if (state.origin && !state.dest && id !== state.origin) {
     state.dest = id;
   }
