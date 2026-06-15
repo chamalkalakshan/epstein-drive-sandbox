@@ -1028,12 +1028,18 @@ function loop(now) {
       state.flightT = 1;
       document.getElementById('btn-flight').classList.remove('active');
       document.getElementById('btn-flight').textContent = '▶ Simulate Flight';
-      document.getElementById('elapsed').textContent = 'ARRIVED';
+      const calc = computeFlight();
+      if (calc) {
+        document.getElementById('elapsed').textContent = `ARRIVED  |  Total: ${formatTime(calc.t_total)}`;
+      } else {
+        document.getElementById('elapsed').textContent = 'ARRIVED';
+      }
     } else {
       const calc = computeFlight();
       if (calc) {
         const elapsedSec = state.flightT * calc.t_total;
-        document.getElementById('elapsed').textContent = `Elapsed: ${formatTime(elapsedSec)}`;
+        const remainingSec = calc.t_total - elapsedSec;
+        document.getElementById('elapsed').textContent = `Elapsed: ${formatTime(elapsedSec)}  |  ETA: ${formatTime(remainingSec)}`;
       }
     }
   }
