@@ -1098,6 +1098,19 @@ function updateFlightPanel() {
     </div>`;
   }
 
+  const maxThrust = state.thrust >= 10 ? state.thrust : Math.min(12, state.thrust * 2);
+  const a_emerg = maxThrust * G0;
+  const t_emerg = 2 * Math.sqrt(calc.dist_m / a_emerg);
+  const v_emerg = a_emerg * (t_emerg / 2);
+  const dv_emerg = 2 * v_emerg;
+  html += `<div class="panel-section" style="border:1px solid #C1440E;padding:8px;"><h3 style="color:#C1440E;">Combat / Emergency Burn</h3>
+    <div class="info-row"><span class="info-key">Max thrust</span><span class="info-val" style="color:#C1440E;">${maxThrust.toFixed(1)}g</span></div>
+    <div class="info-row"><span class="info-key">Emergency time</span><span class="info-val" style="color:#C1440E;">${formatTime(t_emerg)}</span></div>
+    <div class="info-row"><span class="info-key">vs cruise time</span><span class="info-val" style="color:#C1440E;">${(calc.t_total / t_emerg).toFixed(1)}x longer at cruise</span></div>
+    <div class="info-row"><span class="info-key">Emergency dv</span><span class="info-val" style="color:#C1440E;">${(dv_emerg/1000).toFixed(1)} km/s</span></div>
+    <div class="info-row"><span class="info-key">Juice required?</span><span class="info-val" style="color:#C1440E;">${maxThrust > 3 ? 'YES - lethal without Juice' : 'No'}</span></div>
+  </div>`;
+
   html += `<div style="margin-top:8px;"><button class="btn" style="width:100%;font-size:10px;" onclick="shareRoute()">Share Route</button><div id="share-msg" style="color:#44DD88;font-size:10px;text-align:center;height:14px;"></div></div>`;
 
   drawVelocityChart(calc);
