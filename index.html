@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Epstein Drive Physics Sandbox</title>
+<style>
+  :root {
+    --bg: #06060D;
+    --panel: #0F1018;
+    --border: #1E2030;
+    --accent: #FF8C00;
+    --mcrn: #C1440E;
+    --un: #4A90E2;
+    --opa: #E8A030;
+    --ring: #BB44FF;
+    --text: #C8C8D4;
+    --text-dim: #606080;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+  #header h1 {
+    color: var(--accent);
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  #header .subtitle {
+    color: var(--text-dim);
+    font-size: 11px;
+    flex: 1;
+  }
+  .btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 1px;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: rgba(255,140,0,0.12); }
+  .btn.active { background: rgba(255,140,0,0.25); }
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+  #left-sidebar {
+    width: 220px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  #right-sidebar {
+    width: 300px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+    padding: 12px;
+  }
+  .sidebar-title {
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 8px 10px 4px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+  #body-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+  #body-list::-webkit-scrollbar { width: 4px; }
+  #body-list::-webkit-scrollbar-track { background: var(--bg); }
+  #body-list::-webkit-scrollbar-thumb { background: var(--border); }
+  .body-item {
+    padding: 4px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border-left: 2px solid transparent;
+    transition: background 0.1s;
+  }
+  .body-item:hover { background: rgba(255,140,0,0.07); }
+  .body-item.origin { border-left-color: var(--accent); background: rgba(255,140,0,0.1); }
+  .body-item.dest { border-left-color: #FF4444; background: rgba(255,68,68,0.08); }
+  .body-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .body-name { flex: 1; font-size: 11px; }
+  .body-faction {
+    font-size: 9px;
+    letter-spacing: 1px;
+    opacity: 0.8;
+  }
+  .faction-un { color: var(--un); }
+  .faction-mcrn { color: var(--mcrn); }
+  .faction-opa { color: var(--opa); }
+  .faction-ring { color: var(--ring); }
+  #controls {
+    border-top: 1px solid var(--border);
+    padding: 8px 10px;
+  }
+  .ctrl-row {
+    margin-bottom: 8px;
+  }
+  .ctrl-label {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-dim);
+    font-size: 10px;
+    margin-bottom: 3px;
+  }
+  .ctrl-val { color: var(--text); }
+  input[type=range] {
+    width: 100%;
+    appearance: none;
+    background: var(--border);
+    height: 3px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 6px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+  }
+  select:focus { border-color: var(--accent); }
+  #canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  #canvas {
+    display: block;
+    cursor: crosshair;
+  }
+  #tooltip {
+    position: absolute;
+    background: rgba(15,16,24,0.92);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 11px;
+    pointer-events: none;
+    display: none;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  #bottom-bar {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    height: 36px;
+  }
+  #timeline-label { color: var(--text-dim); font-size: 10px; white-space: nowrap; }
+  #timeline-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    position: relative;
+    overflow: visible;
+  }
+  #timeline-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.05s linear;
+  }
+  #timeline-ship {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 0; height: 0;
+    border-left: 7px solid var(--accent);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    left: 0%;
+    transition: left 0.05s linear;
+  }
+  #elapsed { color: var(--accent); font-size: 11px; white-space: nowrap; min-width: 120px; text-align: right; }
+  .panel-section { margin-bottom: 14px; }
+  .panel-section h3 {
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+  .info-key { color: var(--text-dim); }
+  .info-val { color: var(--text); text-align: right; }
+  .info-val.highlight { color: var(--accent); font-weight: bold; }
+  .info-val.warn { color: #FF4444; }
+  .info-val.ok { color: #44DD88; }
+  #empty-panel {
+    color: var(--text-dim);
+    font-size: 11px;
+    text-align: center;
+    padding: 40px 10px;
+    line-height: 1.7;
+  }
+  #right-sidebar::-webkit-scrollbar { width: 4px; }
+  #right-sidebar::-webkit-scrollbar-track { background: var(--bg); }
+  #right-sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+</style>
+</head>
+<body>
+<div id="header">
+  <h1>⚛ Epstein Drive Physics Sandbox</h1>
+  <div class="subtitle">"The Epstein drive changed everything." — Solomon Epstein, 2067</div>
+  <button class="btn" id="btn-orbits">▶ Animate Orbits</button>
+  <button class="btn" id="btn-flight">▶ Simulate Flight</button>
+</div>
+<div id="main">
+  <div id="left-sidebar">
+    <div class="sidebar-title">Navigation Bodies</div>
+    <div id="body-list"></div>
+    <div id="controls">
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Ship Preset</span></div>
+        <select id="ship-preset">
+          <option value="rocinante">Rocinante (Corvette)</option>
+          <option value="donnager">Donnager (Battleship)</option>
+          <option value="cant">Canterbury (Ice hauler)</option>
+          <option value="razorback">Razorback (Pinnace)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Thrust</span><span class="ctrl-val" id="val-thrust">0.33g</span></div>
+        <input type="range" id="sl-thrust" min="0.01" max="10" step="0.01" value="0.33">
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Isp (s)</span><span class="ctrl-val" id="val-isp">50000</span></div>
+        <input type="range" id="sl-isp" min="5000" max="100000" step="1000" value="50000">
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Dry Mass (t)</span><span class="ctrl-val" id="val-dry">80</span></div>
+        <input type="range" id="sl-dry" min="10" max="5000" step="10" value="80">
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Fuel Ratio</span><span class="ctrl-val" id="val-fuel">5.0x</span></div>
+        <input type="range" id="sl-fuel" min="1.1" max="20" step="0.1" value="5">
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Year</span><span class="ctrl-val" id="val-year">2350</span></div>
+        <input type="range" id="sl-year" min="2300" max="2400" step="1" value="2350">
+      </div>
+    </div>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+    <div id="tooltip"></div>
+  </div>
+  <div id="right-sidebar">
+    <div id="empty-panel">
+      Select an ORIGIN<br>then a DESTINATION<br>on the map to compute<br>an Epstein burn trajectory.
+    </div>
+    <div id="flight-panel" style="display:none"></div>
+  </div>
+</div>
+<div id="bottom-bar">
+  <span id="timeline-label">FLIGHT TIMELINE</span>
+  <div id="timeline-track">
+    <div id="timeline-fill"></div>
+    <div id="timeline-ship"></div>
+  </div>
+  <span id="elapsed">— not simulating —</span>
+</div>
+
+<script>
+const AU = 1.496e11;
+const C = 3e8;
+const G0 = 9.81;
+const PI = Math.PI;
+
+const BODIES = [
+  { id:'sun',      name:'Sol',              type:'star',      sma:0,     period:0,      angle0:0,   r:22, color:'#FFF3C4', glow:'#FF8800', faction:null },
+  { id:'mercury',  name:'Mercury',          type:'planet',    sma:0.387, period:0.241,  angle0:48,  r:3,  color:'#B0B0B0', glow:null,       faction:null },
+  { id:'venus',    name:'Venus',            type:'planet',    sma:0.723, period:0.615,  angle0:130, r:5,  color:'#E8C070', glow:null,       faction:null },
+  { id:'earth',    name:'Earth / Luna',     type:'planet',    sma:1.0,   period:1.0,    angle0:200, r:6,  color:'#4A90E2', glow:'#4A90E2',  faction:'un' },
+  { id:'mars',     name:'Mars',             type:'planet',    sma:1.524, period:1.881,  angle0:290, r:4,  color:'#C1440E', glow:'#C1440E',  faction:'mcrn' },
+  { id:'eros',     name:'Eros',             type:'asteroid',  sma:1.458, period:1.76,   angle0:160, r:2,  color:'#9B8B6E', glow:null,       faction:null },
+  { id:'ceres',    name:'Ceres Station',    type:'station',   sma:2.77,  period:4.61,   angle0:45,  r:4,  color:'#E8C030', glow:'#E8A000',  faction:'opa' },
+  { id:'tycho',    name:'Tycho Station',    type:'station',   sma:3.0,   period:5.2,    angle0:320, r:3,  color:'#FF8C00', glow:'#FF6000',  faction:'opa' },
+  { id:'pallas',   name:'Pallas',           type:'asteroid',  sma:2.77,  period:4.61,   angle0:220, r:2,  color:'#7B6B5E', glow:null,       faction:null },
+  { id:'vesta',    name:'Vesta',            type:'asteroid',  sma:2.36,  period:3.63,   angle0:110, r:2,  color:'#8B7355', glow:null,       faction:null },
+  { id:'jupiter',  name:'Jupiter',          type:'planet',    sma:5.2,   period:11.86,  angle0:60,  r:10, color:'#C8A878', glow:'#C8A050',  faction:null },
+  { id:'ganymede', name:'Ganymede Station', type:'station',   sma:5.25,  period:11.86,  angle0:63,  r:3,  color:'#B0A080', glow:'#FF8C00',  faction:'un' },
+  { id:'europa',   name:'Europa',           type:'moon',      sma:5.18,  period:11.86,  angle0:57,  r:2,  color:'#E8E0D0', glow:null,       faction:null },
+  { id:'saturn',   name:'Saturn',           type:'planet',    sma:9.58,  period:29.46,  angle0:150, r:9,  color:'#E8D5A3', glow:'#E8C060',  faction:null },
+  { id:'titan',    name:'Titan',            type:'moon',      sma:9.65,  period:29.46,  angle0:154, r:3,  color:'#E8A030', glow:null,       faction:null },
+  { id:'uranus',   name:'Uranus',           type:'planet',    sma:19.2,  period:84.01,  angle0:240, r:7,  color:'#7DE8E8', glow:null,       faction:null },
+  { id:'neptune',  name:'Neptune',          type:'planet',    sma:30.1,  period:164.8,  angle0:330, r:7,  color:'#4060E8', glow:'#2040D8',  faction:null },
+  { id:'ring',     name:'The Ring Gate',    type:'structure', sma:23.5,  period:0,      angle0:290, r:5,  color:'#BB44FF', glow:'#7700FF',  faction:'ring' },
+];
+
+const SHIPS = {
+  rocinante: { thrust:0.33, isp:50000, dry:80,   fuelRatio:5 },
+  donnager:  { thrust:0.2,  isp:45000, dry:2000, fuelRatio:3 },
+  cant:      { thrust:0.1,  isp:30000, dry:500,  fuelRatio:2 },
+  razorback: { thrust:0.5,  isp:60000, dry:20,   fuelRatio:4 },
+  custom:    { thrust:0.3,  isp:50000, dry:100,  fuelRatio:3 },
+};
+
+const FACTION_COLORS = { un:'#4A90E2', mcrn:'#C1440E', opa:'#E8A030', ring:'#BB44FF' };
+
+let state = {
+  year: 2350,
+  thrust: 0.33,
+  isp: 50000,
+  dry: 80,
+  fuelRatio: 5,
+  origin: null,
+  dest: null,
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  animating: false,
+  flightAnim: false,
+  flightT: 0,
+  flightStart: null,
+  rafId: null,
+  dragging: false,
+  dragStartX: 0,
+  dragStartY: 0,
+  dragPanX: 0,
+  dragPanY: 0,
+  hovered: null,
+};
+
+let stars = [];
+
+function generateStars(W, H) {
+  stars = [];
+  for (let i = 0; i < 400; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.2 + 0.2,
+      a: Math.random() * 0.7 + 0.15,
+    });
+  }
+}
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const wrap = document.getElementById('canvas-wrap');
+
+function resize() {
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  generateStars(canvas.width, canvas.height);
+}
+
+function bodyAngle(b) {
+  if (b.period === 0) return b.angle0 * PI / 180;
+  return (b.angle0 + (state.year - 2350) * 360 / b.period) * PI / 180;
+}
+
+function bodyPos(b) {
+  const a = bodyAngle(b);
+  return { x: b.sma * Math.cos(a), y: b.sma * Math.sin(a) };
+}
+
+function auToPixel(au) {
+  const base = Math.min(canvas.width, canvas.height) * 0.47;
+  if (au === 0) return 0;
+  return base * Math.pow(au / 32, 0.42) * state.zoom;
+}
+
+function worldToScreen(wx, wy) {
+  const cx = canvas.width / 2 + state.panX;
+  const cy = canvas.height / 2 + state.panY;
+  return {
+    x: cx + wx * (Math.min(canvas.width, canvas.height) * 0.47) * Math.pow(1 / 32, 0.42) * state.zoom * 32 / 32,
+    y: cy + wy * (Math.min(canvas.width, canvas.height) * 0.47) * Math.pow(1 / 32, 0.42) * state.zoom * 32 / 32,
+  };
+}
+
+function auScale() {
+  return (Math.min(canvas.width, canvas.height) * 0.47) * Math.pow(1 / 32, 0.42) * state.zoom;
+}
+
+function wts(wx, wy) {
+  const cx = canvas.width / 2 + state.panX;
+  const cy = canvas.height / 2 + state.panY;
+  const sc = auScale();
+  return { x: cx + wx * sc, y: cy + wy * sc };
+}
+
+function stw(sx, sy) {
+  const cx = canvas.width / 2 + state.panX;
+  const cy = canvas.height / 2 + state.panY;
+  const sc = auScale();
+  return { x: (sx - cx) / sc, y: (sy - cy) / sc };
+}
+
+function getBodyScreenPos(b) {
+  const p = bodyPos(b);
+  return wts(p.x, p.y);
+}
+
+function drawScene(now) {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = '#06060D';
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  for (const s of stars) {
+    ctx.globalAlpha = s.a;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, 2 * PI);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  const cx = canvas.width / 2 + state.panX;
+  const cy = canvas.height / 2 + state.panY;
+  const sc = auScale();
+
+  // Asteroid belt haze
+  const beltInner = 2.2 * sc, beltOuter = 3.2 * sc;
+  const grad = ctx.createRadialGradient(cx, cy, beltInner, cx, cy, beltOuter);
+  grad.addColorStop(0, 'rgba(80,60,20,0)');
+  grad.addColorStop(0.4, 'rgba(80,60,20,0.06)');
+  grad.addColorStop(1, 'rgba(80,60,20,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, beltOuter, 0, 2 * PI);
+  ctx.arc(cx, cy, beltInner, 0, 2 * PI, true);
+  ctx.fill();
+
+  // Orbit rings
+  ctx.setLineDash([2, 6]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (const b of BODIES) {
+    if (b.sma === 0) continue;
+    const r = b.sma * sc;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2 * PI);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Trajectory
+  if (state.origin && state.dest) {
+    const op = bodyPos(BODIES.find(b => b.id === state.origin));
+    const dp = bodyPos(BODIES.find(b => b.id === state.dest));
+    const os = wts(op.x, op.y);
+    const ds = wts(dp.x, dp.y);
+
+    // Control point: push away from sun (origin)
+    const midX = (os.x + ds.x) / 2;
+    const midY = (os.y + ds.y) / 2;
+    const chordLen = Math.sqrt((ds.x - os.x) ** 2 + (ds.y - os.y) ** 2);
+    const vx = midX - cx, vy = midY - cy;
+    const vLen = Math.sqrt(vx * vx + vy * vy) || 1;
+    const push = chordLen * 0.25;
+    const cpx = midX + (vx / vLen) * push;
+    const cpy = midY + (vy / vLen) * push;
+
+    // Dashed trajectory
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = 'rgba(255,140,0,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(os.x, os.y);
+    ctx.quadraticCurveTo(cpx, cpy, ds.x, ds.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Midpoint flip marker
+    const mx = 0.25 * os.x + 0.5 * cpx + 0.25 * ds.x;
+    const my = 0.25 * os.y + 0.5 * cpy + 0.25 * ds.y;
+    ctx.fillStyle = '#FF8C00';
+    ctx.beginPath();
+    ctx.arc(mx, my, 4, 0, 2 * PI);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,140,0,0.9)';
+    ctx.font = '9px Consolas, monospace';
+    ctx.fillText('FLIP', mx + 7, my + 3);
+
+    // Arrows along path
+    for (let t = 0.2; t < 0.9; t += 0.3) {
+      const dt = 0.02;
+      const ax = (1 - t) * (1 - t) * os.x + 2 * (1 - t) * t * cpx + t * t * ds.x;
+      const ay = (1 - t) * (1 - t) * os.y + 2 * (1 - t) * t * cpy + t * t * ds.y;
+      const bx2 = (1 - (t + dt)) * (1 - (t + dt)) * os.x + 2 * (1 - (t + dt)) * (t + dt) * cpx + (t + dt) * (t + dt) * ds.x;
+      const by2 = (1 - (t + dt)) * (1 - (t + dt)) * os.y + 2 * (1 - (t + dt)) * (t + dt) * cpy + (t + dt) * (t + dt) * ds.y;
+      const ang = Math.atan2(by2 - ay, bx2 - ax);
+      ctx.save();
+      ctx.translate(ax, ay);
+      ctx.rotate(ang);
+      ctx.fillStyle = 'rgba(255,140,0,0.5)';
+      ctx.beginPath();
+      ctx.moveTo(5, 0);
+      ctx.lineTo(-3, -3);
+      ctx.lineTo(-3, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Flight sim ship
+    if (state.flightAnim) {
+      const t = state.flightT;
+      const sx2 = (1 - t) * (1 - t) * os.x + 2 * (1 - t) * t * cpx + t * t * ds.x;
+      const sy2 = (1 - t) * (1 - t) * os.y + 2 * (1 - t) * t * cpy + t * t * ds.y;
+      const dt2 = 0.01;
+      const nx = (1 - (t + dt2)) * (1 - (t + dt2)) * os.x + 2 * (1 - (t + dt2)) * (t + dt2) * cpx + (t + dt2) * (t + dt2) * ds.x;
+      const ny = (1 - (t + dt2)) * (1 - (t + dt2)) * os.y + 2 * (1 - (t + dt2)) * (t + dt2) * cpy + (t + dt2) * (t + dt2) * ds.y;
+      const shipAngle = Math.atan2(ny - sy2, nx - sx2);
+
+      // Engine plume
+      const plumeFactor = 0.8 + 0.2 * Math.sin(now / 80);
+      ctx.save();
+      ctx.translate(sx2, sy2);
+      ctx.rotate(shipAngle);
+      const pg = ctx.createLinearGradient(-20 * plumeFactor, 0, 0, 0);
+      pg.addColorStop(0, 'rgba(255,100,0,0)');
+      pg.addColorStop(0.5, 'rgba(255,180,0,0.5)');
+      pg.addColorStop(1, 'rgba(255,255,200,0.9)');
+      ctx.fillStyle = pg;
+      ctx.beginPath();
+      ctx.moveTo(0, -3);
+      ctx.lineTo(-18 * plumeFactor, 0);
+      ctx.lineTo(0, 3);
+      ctx.closePath();
+      ctx.fill();
+      // Ship triangle
+      ctx.fillStyle = '#FF8C00';
+      ctx.beginPath();
+      ctx.moveTo(8, 0);
+      ctx.lineTo(-5, -4);
+      ctx.lineTo(-5, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // Bodies
+  for (const b of BODIES) {
+    const p = bodyPos(b);
+    const sp = wts(p.x, p.y);
+    const sr = b.r + (state.zoom > 1 ? Math.log(state.zoom) * 2 : 0);
+
+    // Glow
+    if (b.glow) {
+      const glow = ctx.createRadialGradient(sp.x, sp.y, sr * 0.5, sp.x, sp.y, sr * 3);
+      glow.addColorStop(0, b.glow + '60');
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sr * 3, 0, 2 * PI);
+      ctx.fill();
+    }
+
+    if (b.type === 'star') {
+      const sg = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, sr);
+      sg.addColorStop(0, '#FFFFFF');
+      sg.addColorStop(0.4, '#FFF3C4');
+      sg.addColorStop(1, '#FF8800');
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sr, 0, 2 * PI);
+      ctx.fill();
+    } else if (b.type === 'structure') {
+      // Ring Gate: hexagon with spokes
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * 2 * PI;
+        const px2 = sp.x + sr * 1.5 * Math.cos(a);
+        const py2 = sp.y + sr * 1.5 * Math.sin(a);
+        if (i === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      // Center dot
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, 2, 0, 2 * PI);
+      ctx.fill();
+      // Spoke glow
+      const rg = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, sr * 4);
+      rg.addColorStop(0, 'rgba(187,68,255,0.3)');
+      rg.addColorStop(1, 'transparent');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sr * 4, 0, 2 * PI);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sr, 0, 2 * PI);
+      ctx.fill();
+      // Station ring
+      if (b.type === 'station') {
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sr + 3, 0, 2 * PI);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Selection rings
+    const dashOffset = (now / 40) % 16;
+    if (state.origin === b.id) {
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.lineDashOffset = -dashOffset;
+      ctx.strokeStyle = '#FF8C00';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sr + 6, 0, 2 * PI);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (state.dest === b.id) {
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.lineDashOffset = -dashOffset;
+      ctx.strokeStyle = '#FF4444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sr + 6, 0, 2 * PI);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Labels
+    ctx.font = '10px Consolas, monospace';
+    ctx.fillStyle = state.hovered === b.id ? '#FFFFFF' : (b.faction ? FACTION_COLORS[b.faction] : 'rgba(200,200,212,0.7)');
+    ctx.fillText(b.name, sp.x + sr + 4, sp.y + 3);
+  }
+
+  // Hint bar
+  let hint = '';
+  if (!state.origin) hint = 'Click a body to set ORIGIN · Scroll to zoom · Middle-drag to pan · [Space] animate orbits';
+  else if (!state.dest) hint = `Origin: ${BODIES.find(b=>b.id===state.origin).name} — Click another body for DESTINATION · [Esc] clear`;
+  else {
+    const on = BODIES.find(b=>b.id===state.origin).name;
+    const dn = BODIES.find(b=>b.id===state.dest).name;
+    hint = `${on} → ${dn} · [F] simulate flight · [Esc] clear route · [R] reset view`;
+  }
+  ctx.font = '10px Consolas, monospace';
+  ctx.fillStyle = 'rgba(96,96,128,0.8)';
+  const hintW = ctx.measureText(hint).width;
+  ctx.fillText(hint, canvas.width / 2 - hintW / 2, canvas.height - 12);
+}
+
+function loop(now) {
+  state.rafId = requestAnimationFrame(loop);
+
+  if (state.animating) {
+    state.year += 0.002;
+    if (state.year > 2400) state.year = 2300;
+    document.getElementById('val-year').textContent = Math.floor(state.year);
+    document.getElementById('sl-year').value = Math.floor(state.year);
+  }
+
+  if (state.flightAnim && state.flightStart !== null) {
+    const elapsed = (now - state.flightStart) / 1000;
+    state.flightT = Math.min(elapsed / 8, 1);
+    updateTimeline(state.flightT);
+    if (state.flightT >= 1) {
+      state.flightAnim = false;
+      state.flightT = 1;
+      document.getElementById('btn-flight').classList.remove('active');
+      document.getElementById('btn-flight').textContent = '▶ Simulate Flight';
+      document.getElementById('elapsed').textContent = 'ARRIVED';
+    } else {
+      const calc = computeFlight();
+      if (calc) {
+        const elapsedSec = state.flightT * calc.t_total;
+        document.getElementById('elapsed').textContent = `Elapsed: ${formatTime(elapsedSec)}`;
+      }
+    }
+  }
+
+  drawScene(now);
+
+  if (state.origin && state.dest) {
+    updateFlightPanel();
+  }
+}
+
+function updateTimeline(t) {
+  document.getElementById('timeline-fill').style.width = (t * 100) + '%';
+  document.getElementById('timeline-ship').style.left = (t * 100) + '%';
+}
+
+function formatTime(s) {
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  if (d > 365) return `${(d / 365.25).toFixed(1)}y`;
+  if (d > 30) return `${d}d ${h}h`;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m ${Math.floor(s % 60)}s`;
+}
+
+function formatMass(kg) {
+  if (kg >= 1e12) return (kg / 1e12).toFixed(2) + ' Gt';
+  if (kg >= 1e9) return (kg / 1e9).toFixed(2) + ' Mt';
+  if (kg >= 1e6) return (kg / 1e6).toFixed(2) + ' kt';
+  return (kg / 1e3).toFixed(1) + ' t';
+}
+
+function computeFlight() {
+  if (!state.origin || !state.dest) return null;
+  const ob = BODIES.find(b => b.id === state.origin);
+  const db = BODIES.find(b => b.id === state.dest);
+  const op = bodyPos(ob), dp = bodyPos(db);
+  const dist_au = Math.sqrt((op.x - dp.x) ** 2 + (op.y - dp.y) ** 2);
+  const dist_m = dist_au * AU;
+
+  const a = state.thrust * G0;
+  const t_total = 2 * Math.sqrt(dist_m / a);
+  const v_max = a * (t_total / 2);
+  const dv_total = 2 * v_max;
+  const v_exhaust = state.isp * G0;
+  const mass_ratio_needed = Math.exp(dv_total / v_exhaust);
+  const available_dv = v_exhaust * Math.log(state.fuelRatio);
+  const feasible = dv_total <= available_dv;
+  const fuel_mass = state.dry * (mass_ratio_needed - 1);
+  const beta = v_max / C;
+  const gamma = 1 / Math.sqrt(Math.max(1e-30, 1 - beta * beta));
+  const dilation = t_total * (1 - 1 / gamma);
+
+  return {
+    dist_au, dist_m, a, t_total, v_max, dv_total,
+    v_exhaust, mass_ratio_needed, available_dv, feasible,
+    fuel_mass, beta, gamma, dilation,
+    ob, db,
+  };
+}
+
+function updateFlightPanel() {
+  const calc = computeFlight();
+  if (!calc) return;
+
+  const {
+    dist_au, t_total, v_max, dv_total,
+    mass_ratio_needed, available_dv, feasible, fuel_mass,
+    beta, dilation, ob, db,
+  } = calc;
+
+  const gFeel = (() => {
+    const g = state.thrust;
+    if (g < 0.1) return 'Weightless';
+    if (g < 0.5) return 'Moon-like';
+    if (g < 1.0) return 'Sub-g comfortable';
+    if (g < 1.3) return 'Earth-normal';
+    if (g < 3.0) return 'High-g exhausting';
+    if (g < 7.0) return 'Needs Juice';
+    return 'Combat burn — lethal';
+  })();
+
+  const juiceNeeded = state.thrust > 3;
+  const dilationStr = dilation < 60 ? 'Negligible' : formatTime(dilation) + ' saved';
+
+  let html = '';
+
+  html += `<div class="panel-section"><h3>Route</h3>
+    <div class="info-row"><span class="info-key">Origin</span><span class="info-val">${ob.name}</span></div>
+    <div class="info-row"><span class="info-key">Destination</span><span class="info-val">${db.name}</span></div>
+    <div class="info-row"><span class="info-key">Distance</span><span class="info-val">${dist_au.toFixed(3)} AU</span></div>
+  </div>`;
+
+  html += `<div class="panel-section"><h3>Epstein Flip-and-Burn</h3>
+    <div class="info-row"><span class="info-key">Accel Phase</span><span class="info-val">${formatTime(t_total / 2)}</span></div>
+    <div class="info-row"><span class="info-key">Flip Point</span><span class="info-val">${(dist_au / 2).toFixed(3)} AU</span></div>
+    <div class="info-row"><span class="info-key">Decel Phase</span><span class="info-val">${formatTime(t_total / 2)}</span></div>
+    <div class="info-row"><span class="info-key">Total Time</span><span class="info-val highlight">${formatTime(t_total)}</span></div>
+    <div class="info-row"><span class="info-key">Peak Velocity</span><span class="info-val">${(v_max / 1000).toFixed(0)} km/s</span></div>
+    <div class="info-row"><span class="info-key">% of c</span><span class="info-val">${(beta * 100).toFixed(4)}%</span></div>
+  </div>`;
+
+  html += `<div class="panel-section"><h3>Propellant Budget</h3>
+    <div class="info-row"><span class="info-key">Total Δv</span><span class="info-val">${(dv_total / 1000).toFixed(1)} km/s</span></div>
+    <div class="info-row"><span class="info-key">Propellant Needed</span><span class="info-val ${feasible ? '' : 'warn'}">${formatMass(fuel_mass * 1000)}</span></div>
+    <div class="info-row"><span class="info-key">Mass Ratio</span><span class="info-val">${mass_ratio_needed.toFixed(2)}:1</span></div>
+    <div class="info-row"><span class="info-key">Available Δv</span><span class="info-val ${feasible ? 'ok' : 'warn'}">${(available_dv / 1000).toFixed(1)} km/s</span></div>
+    ${!feasible ? `<div class="info-row"><span class="info-val warn" style="width:100%;text-align:center;">⚠ INSUFFICIENT PROPELLANT</span></div>` : ''}
+  </div>`;
+
+  html += `<div class="panel-section"><h3>Crew Experience</h3>
+    <div class="info-row"><span class="info-key">G-Force</span><span class="info-val">${state.thrust.toFixed(2)}g</span></div>
+    <div class="info-row"><span class="info-key">Gravity Feel</span><span class="info-val">${gFeel}</span></div>
+    <div class="info-row"><span class="info-key">Juice Needed?</span><span class="info-val ${juiceNeeded ? 'warn' : 'ok'}">${juiceNeeded ? 'YES' : 'No'}</span></div>
+    <div class="info-row"><span class="info-key">Time Dilation</span><span class="info-val">${dilationStr}</span></div>
+  </div>`;
+
+  document.getElementById('empty-panel').style.display = 'none';
+  document.getElementById('flight-panel').style.display = 'block';
+  document.getElementById('flight-panel').innerHTML = html;
+}
+
+function selectBody(id) {
+  if (!state.origin || (state.origin && state.dest)) {
+    state.origin = id;
+    state.dest = null;
+    state.flightAnim = false;
+    state.flightT = 0;
+    updateTimeline(0);
+    document.getElementById('elapsed').textContent = '— not simulating —';
+    document.getElementById('btn-flight').classList.remove('active');
+    document.getElementById('btn-flight').textContent = '▶ Simulate Flight';
+    document.getElementById('empty-panel').style.display = 'block';
+    document.getElementById('flight-panel').style.display = 'none';
+  } else if (state.origin && !state.dest && id !== state.origin) {
+    state.dest = id;
+  }
+  buildBodyList();
+}
+
+function buildBodyList() {
+  const list = document.getElementById('body-list');
+  list.innerHTML = '';
+  for (const b of BODIES) {
+    const div = document.createElement('div');
+    div.className = 'body-item' + (state.origin === b.id ? ' origin' : '') + (state.dest === b.id ? ' dest' : '');
+    div.innerHTML = `
+      <div class="body-dot" style="background:${b.color}"></div>
+      <span class="body-name">${b.name}</span>
+      ${b.faction ? `<span class="body-faction faction-${b.faction}">${b.faction.toUpperCase()}</span>` : ''}
+    `;
+    div.addEventListener('click', () => selectBody(b.id));
+    list.appendChild(div);
+  }
+}
+
+// Canvas interaction
+canvas.addEventListener('click', (e) => {
+  if (state.dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let closest = null, closestDist = Infinity;
+  for (const b of BODIES) {
+    const sp = getBodyScreenPos(b);
+    const d = Math.sqrt((sp.x - mx) ** 2 + (sp.y - my) ** 2);
+    const hitR = Math.max(b.r + 8, 14);
+    if (d < hitR && d < closestDist) { closest = b; closestDist = d; }
+  }
+  if (closest) selectBody(closest.id);
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  if (state.dragging) {
+    state.panX = state.dragPanX + (mx - state.dragStartX);
+    state.panY = state.dragPanY + (my - state.dragStartY);
+    return;
+  }
+
+  let hovered = null;
+  for (const b of BODIES) {
+    const sp = getBodyScreenPos(b);
+    const d = Math.sqrt((sp.x - mx) ** 2 + (sp.y - my) ** 2);
+    if (d < Math.max(b.r + 8, 14)) { hovered = b; break; }
+  }
+  state.hovered = hovered ? hovered.id : null;
+  canvas.style.cursor = hovered ? 'pointer' : 'crosshair';
+
+  const tooltip = document.getElementById('tooltip');
+  if (hovered) {
+    const op = state.origin ? bodyPos(BODIES.find(b => b.id === state.origin)) : null;
+    const hp = bodyPos(hovered);
+    let dist = '';
+    if (op && hovered.id !== state.origin) {
+      const d = Math.sqrt((op.x - hp.x) ** 2 + (op.y - hp.y) ** 2);
+      dist = ` · ${d.toFixed(3)} AU from origin`;
+    }
+    tooltip.style.display = 'block';
+    tooltip.style.left = (mx + 16) + 'px';
+    tooltip.style.top = (my - 10) + 'px';
+    tooltip.innerHTML = `<strong style="color:${hovered.color}">${hovered.name}</strong>${hovered.faction ? ` <span class="faction-${hovered.faction}" style="color:${FACTION_COLORS[hovered.faction]}">[${hovered.faction.toUpperCase()}]</span>` : ''}${dist}`;
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  if (e.button === 1 || e.button === 2) {
+    state.dragging = true;
+    const rect = canvas.getBoundingClientRect();
+    state.dragStartX = e.clientX - rect.left;
+    state.dragStartY = e.clientY - rect.top;
+    state.dragPanX = state.panX;
+    state.dragPanY = state.panY;
+    e.preventDefault();
+  }
+});
+
+canvas.addEventListener('mouseup', () => { state.dragging = false; });
+canvas.addEventListener('mouseleave', () => { state.dragging = false; document.getElementById('tooltip').style.display = 'none'; });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 0.9 : 1.1;
+  state.zoom = Math.max(0.3, Math.min(5, state.zoom * factor));
+});
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    state.origin = null; state.dest = null;
+    state.flightAnim = false; state.flightT = 0;
+    updateTimeline(0);
+    document.getElementById('elapsed').textContent = '— not simulating —';
+    document.getElementById('btn-flight').classList.remove('active');
+    document.getElementById('btn-flight').textContent = '▶ Simulate Flight';
+    document.getElementById('empty-panel').style.display = 'block';
+    document.getElementById('flight-panel').style.display = 'none';
+    buildBodyList();
+  }
+  if (e.key === ' ') { e.preventDefault(); toggleOrbits(); }
+  if (e.key === 'f' || e.key === 'F') toggleFlight();
+  if (e.key === 'r' || e.key === 'R') { state.zoom = 1; state.panX = 0; state.panY = 0; }
+});
+
+function toggleOrbits() {
+  state.animating = !state.animating;
+  const btn = document.getElementById('btn-orbits');
+  btn.classList.toggle('active', state.animating);
+  btn.textContent = state.animating ? '⏸ Animate Orbits' : '▶ Animate Orbits';
+}
+
+function toggleFlight() {
+  if (!state.origin || !state.dest) return;
+  if (state.flightAnim) {
+    state.flightAnim = false;
+    document.getElementById('btn-flight').classList.remove('active');
+    document.getElementById('btn-flight').textContent = '▶ Simulate Flight';
+  } else {
+    state.flightAnim = true;
+    state.flightT = 0;
+    state.flightStart = performance.now();
+    document.getElementById('btn-flight').classList.add('active');
+    document.getElementById('btn-flight').textContent = '⏸ Simulate Flight';
+    document.getElementById('elapsed').textContent = 'Elapsed: 0s';
+  }
+}
+
+document.getElementById('btn-orbits').addEventListener('click', toggleOrbits);
+document.getElementById('btn-flight').addEventListener('click', toggleFlight);
+
+// Sliders
+function applyPreset(name) {
+  const p = SHIPS[name];
+  state.thrust = p.thrust; state.isp = p.isp; state.dry = p.dry; state.fuelRatio = p.fuelRatio;
+  document.getElementById('sl-thrust').value = p.thrust;
+  document.getElementById('sl-isp').value = p.isp;
+  document.getElementById('sl-dry').value = p.dry;
+  document.getElementById('sl-fuel').value = p.fuelRatio;
+  document.getElementById('val-thrust').textContent = p.thrust.toFixed(2) + 'g';
+  document.getElementById('val-isp').textContent = p.isp;
+  document.getElementById('val-dry').textContent = p.dry;
+  document.getElementById('val-fuel').textContent = p.fuelRatio.toFixed(1) + 'x';
+}
+
+document.getElementById('ship-preset').addEventListener('change', e => applyPreset(e.target.value));
+
+document.getElementById('sl-thrust').addEventListener('input', e => {
+  state.thrust = parseFloat(e.target.value);
+  document.getElementById('val-thrust').textContent = state.thrust.toFixed(2) + 'g';
+  document.getElementById('ship-preset').value = 'custom';
+});
+document.getElementById('sl-isp').addEventListener('input', e => {
+  state.isp = parseInt(e.target.value);
+  document.getElementById('val-isp').textContent = state.isp;
+  document.getElementById('ship-preset').value = 'custom';
+});
+document.getElementById('sl-dry').addEventListener('input', e => {
+  state.dry = parseInt(e.target.value);
+  document.getElementById('val-dry').textContent = state.dry;
+  document.getElementById('ship-preset').value = 'custom';
+});
+document.getElementById('sl-fuel').addEventListener('input', e => {
+  state.fuelRatio = parseFloat(e.target.value);
+  document.getElementById('val-fuel').textContent = state.fuelRatio.toFixed(1) + 'x';
+  document.getElementById('ship-preset').value = 'custom';
+});
+document.getElementById('sl-year').addEventListener('input', e => {
+  state.year = parseInt(e.target.value);
+  document.getElementById('val-year').textContent = state.year;
+  if (state.animating) { state.animating = false; document.getElementById('btn-orbits').classList.remove('active'); document.getElementById('btn-orbits').textContent = '▶ Animate Orbits'; }
+});
+
+window.addEventListener('resize', () => { resize(); });
+
+resize();
+buildBodyList();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
