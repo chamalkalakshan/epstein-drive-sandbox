@@ -864,11 +864,16 @@ function updateFlightPanel() {
     <canvas id="vel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
   </div>`;
 
+  html += `<div class="panel-section"><h3>Propellant Remaining</h3>
+    <canvas id="fuel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
+  </div>`;
+
   document.getElementById('empty-panel').style.display = 'none';
   document.getElementById('flight-panel').style.display = 'block';
   document.getElementById('flight-panel').innerHTML = html;
 
   drawVelocityChart(calc);
+  drawFuelChart(calc);
 }
 
 function drawVelocityChart(calc) {
@@ -941,6 +946,76 @@ function drawVelocityChart(calc) {
   c.fillText('0', PAD.l, PAD.t + cH + 10);
   c.fillText(formatTime(t_total), PAD.l + cW - 20, PAD.t + cH + 10);
   c.fillText('km/s', PAD.l - 35, PAD.t + 5);
+}
+
+function drawFuelChart(calc) {
+  const el = document.getElementById('fuel-chart');
+  if (!el) return;
+  const c = el.getContext('2d');
+  const W = el.width, H = el.height;
+  const PAD = { l: 42, r: 8, t: 8, b: 22 };
+  const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+
+  c.clearRect(0, 0, W, H);
+  c.fillStyle = '#06060D';
+  c.fillRect(0, 0, W, H);
+
+  const { t_total, fuel_mass, v_exhaust, a } = calc;
+  const m0 = fuel_mass * 1000; // kg
+
+  // Grid
+  c.strokeStyle = 'rgba(255,255,255,0.06)';
+  c.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const x = PAD.l + (i / 4) * cW;
+    c.beginPath(); c.moveTo(x, PAD.t); c.lineTo(x, PAD.t + cH); c.stroke();
+  }
+  for (let i = 0; i <= 2; i++) {
+    const y = PAD.t + (i / 2) * cH;
+    c.beginPath(); c.moveTo(PAD.l, y); c.lineTo(PAD.l + cW, y); c.stroke();
+  }
+
+  const STEPS = 120;
+  const pts = [];
+  for (let i = 0; i <= STEPS; i++) {
+    const t = (i / STEPS) * t_total;
+    const mass = m0 * Math.exp(-a * t / v_exhaust);
+    const x = PAD.l + (i / STEPS) * cW;
+    const y = PAD.t + cH - (mass / m0) * cH;
+    pts.push({ x, y });
+  }
+
+  // Fill
+  c.beginPath();
+  c.moveTo(pts[0].x, PAD.t + cH);
+  pts.forEach(p => c.lineTo(p.x, p.y));
+  c.lineTo(pts[pts.length - 1].x, PAD.t + cH);
+  c.closePath();
+  c.fillStyle = 'rgba(200,80,0,0.18)';
+  c.fill();
+
+  // Stroke
+  c.beginPath();
+  pts.forEach((p, i) => i === 0 ? c.moveTo(p.x, p.y) : c.lineTo(p.x, p.y));
+  c.strokeStyle = '#FF8C00';
+  c.lineWidth = 1.5;
+  c.stroke();
+
+  // Axes
+  c.strokeStyle = 'rgba(200,200,212,0.3)';
+  c.lineWidth = 1;
+  c.beginPath(); c.moveTo(PAD.l, PAD.t); c.lineTo(PAD.l, PAD.t + cH); c.lineTo(PAD.l + cW, PAD.t + cH); c.stroke();
+
+  // Labels
+  c.fillStyle = '#606080';
+  c.font = '8px Consolas,monospace';
+  c.textAlign = 'right';
+  const topLabel = m0 >= 1e6 ? (m0 / 1e6).toFixed(1) + 'Mt' : m0 >= 1e3 ? (m0 / 1e3).toFixed(0) + 't' : m0.toFixed(0) + 'kg';
+  c.fillText(topLabel, PAD.l - 2, PAD.t + 5);
+  c.fillText('0', PAD.l - 2, PAD.t + cH + 1);
+  c.textAlign = 'left';
+  c.fillText('0', PAD.l, PAD.t + cH + 10);
+  c.fillText(formatTime(t_total), PAD.l + cW - 20, PAD.t + cH + 10);
 }
 
 function selectBody(id) {
