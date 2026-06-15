@@ -62,4 +62,4 @@ Or open `index.html` in any modern browser to run locally. No install or server 
 
 ## Screenshot
 
-Open index.html, select Earth as origin and Ceres Station as destination, then press F to simulate the flight.
+![Epstein Drive Physics Sandbox](screenshot.png)
