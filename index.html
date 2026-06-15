@@ -987,6 +987,28 @@ function updateFlightPanel() {
     <canvas id="vel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
   </div>`;
 
+  // Closest approach finder
+  if (calc.ob.period > 0 && calc.db.period > 0) {
+    let minDist = Infinity, bestYear = state.year;
+    for (let y = state.year; y <= state.year + 10; y += 0.01) {
+      const oA = (calc.ob.angle0 + (y - 2350) * 360 / calc.ob.period) * PI / 180;
+      const dA = (calc.db.angle0 + (y - 2350) * 360 / calc.db.period) * PI / 180;
+      const ox = calc.ob.sma * Math.cos(oA), oy = calc.ob.sma * Math.sin(oA);
+      const dx2 = calc.db.sma * Math.cos(dA), dy2 = calc.db.sma * Math.sin(dA);
+      const d2 = Math.sqrt((ox - dx2) ** 2 + (oy - dy2) ** 2);
+      if (d2 < minDist) { minDist = d2; bestYear = y; }
+    }
+    const curDist = calc.dist_au;
+    const distSave = (curDist - minDist) / curDist * 100;
+    html += `<div class="panel-section"><h3>Launch Window</h3>
+      <div class="info-row"><span class="info-key">Best year</span><span class="info-val highlight">${bestYear.toFixed(1)}</span></div>
+      <div class="info-row"><span class="info-key">Min distance</span><span class="info-val">${minDist.toFixed(3)} AU</span></div>
+      <div class="info-row"><span class="info-key">Current distance</span><span class="info-val">${curDist.toFixed(3)} AU</span></div>
+      <div class="info-row"><span class="info-key">Distance saving</span><span class="info-val ok">${distSave.toFixed(1)}%</span></div>
+      <div class="info-row"><button class="btn" style="width:100%;margin-top:4px;font-size:10px;" onclick="jumpToYear(${bestYear.toFixed(2)})">Jump to ${bestYear.toFixed(1)}</button></div>
+    </div>`;
+  }
+
   if (state.cargo > 0) {
     const emptyFuel = state.dry * (Math.exp(calc.dv_total / calc.v_exhaust) - 1);
     const loadedFuel = fuel_mass;
@@ -1399,6 +1421,12 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'f' || e.key === 'F') toggleFlight();
   if (e.key === 'r' || e.key === 'R') { state.zoom = 1; state.panX = 0; state.panY = 0; }
 });
+
+function jumpToYear(y) {
+  state.year = y;
+  document.getElementById('sl-year').value = Math.round(y);
+  document.getElementById('val-year').textContent = Math.round(y);
+}
 
 function toggleRel() {
   state.relEffects = !state.relEffects;
