@@ -1098,6 +1098,8 @@ function updateFlightPanel() {
     </div>`;
   }
 
+  html += `<div style="margin-top:8px;"><button class="btn" style="width:100%;font-size:10px;" onclick="shareRoute()">Share Route</button><div id="share-msg" style="color:#44DD88;font-size:10px;text-align:center;height:14px;"></div></div>`;
+
   drawVelocityChart(calc);
   drawFuelChart(calc);
 }
@@ -1422,6 +1424,42 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'r' || e.key === 'R') { state.zoom = 1; state.panX = 0; state.panY = 0; }
 });
 
+function shareRoute() {
+  if (!state.origin || !state.dest) return;
+  const params = new URLSearchParams({
+    origin: state.origin,
+    dest: state.dest,
+    thrust: state.thrust,
+    isp: state.isp,
+    dry: state.dry,
+    fuel: state.fuelRatio,
+    year: Math.round(state.year),
+  });
+  const url = window.location.href.split('#')[0] + '#' + params.toString();
+  navigator.clipboard.writeText(url).then(() => {
+    const el = document.getElementById('share-msg');
+    if (el) { el.textContent = 'Copied!'; setTimeout(() => { el.textContent = ''; }, 2000); }
+  }).catch(() => {
+    window.location.hash = params.toString();
+  });
+}
+
+function restoreFromHash() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return;
+  try {
+    const params = new URLSearchParams(hash);
+    if (params.get('origin')) { state.origin = params.get('origin'); }
+    if (params.get('dest')) { state.dest = params.get('dest'); }
+    if (params.get('thrust')) { state.thrust = parseFloat(params.get('thrust')); document.getElementById('sl-thrust').value = state.thrust; document.getElementById('val-thrust').textContent = state.thrust.toFixed(2) + 'g'; }
+    if (params.get('isp')) { state.isp = parseInt(params.get('isp')); document.getElementById('sl-isp').value = state.isp; document.getElementById('val-isp').textContent = state.isp; }
+    if (params.get('dry')) { state.dry = parseInt(params.get('dry')); document.getElementById('sl-dry').value = state.dry; document.getElementById('val-dry').textContent = state.dry; }
+    if (params.get('fuel')) { state.fuelRatio = parseFloat(params.get('fuel')); document.getElementById('sl-fuel').value = state.fuelRatio; document.getElementById('val-fuel').textContent = state.fuelRatio.toFixed(1) + 'x'; }
+    if (params.get('year')) { state.year = parseInt(params.get('year')); document.getElementById('sl-year').value = state.year; document.getElementById('val-year').textContent = state.year; }
+    buildBodyList();
+  } catch(e) {}
+}
+
 function jumpToYear(y) {
   state.year = y;
   document.getElementById('sl-year').value = Math.round(y);
@@ -1520,6 +1558,7 @@ window.addEventListener('resize', () => { resize(); });
 
 resize();
 buildBodyList();
+restoreFromHash();
 requestAnimationFrame(loop);
 </script>
 </body>
