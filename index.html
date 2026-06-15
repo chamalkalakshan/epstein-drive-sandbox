@@ -270,6 +270,7 @@
   <button class="btn" id="btn-flight">▶ Simulate Flight</button>
   <button class="btn" id="btn-events" onclick="toggleEvents()">Expanse Events</button>
   <button class="btn" id="btn-factions" onclick="toggleFactions()">Faction Zones</button>
+  <button class="btn" id="btn-rel" onclick="toggleRel()">Rel. Effects</button>
 </div>
 <div id="main">
   <div id="left-sidebar">
@@ -397,6 +398,7 @@ let state = {
   rafId: null,
   showEvents: false,
   showFactions: false,
+  relEffects: false,
   dragging: false,
   dragStartX: 0,
   dragStartY: 0,
@@ -946,11 +948,16 @@ function updateFlightPanel() {
     <div class="info-row"><span class="info-key">Distance</span><span class="info-val">${dist_au.toFixed(3)} AU</span></div>
   </div>`;
 
+  const t_proper = t_total * Math.sqrt(Math.max(0, 1 - beta * beta));
+  const displayTime = state.relEffects ? t_proper : t_total;
+  const clockLabel = state.relEffects ? 'Ship clock' : 'Station clock';
   html += `<div class="panel-section"><h3>Epstein Flip-and-Burn</h3>
-    <div class="info-row"><span class="info-key">Accel Phase</span><span class="info-val">${formatTime(t_total / 2)}</span></div>
+    <div class="info-row"><span class="info-key">Accel Phase</span><span class="info-val">${formatTime(displayTime / 2)}</span></div>
     <div class="info-row"><span class="info-key">Flip Point</span><span class="info-val">${(dist_au / 2).toFixed(3)} AU</span></div>
-    <div class="info-row"><span class="info-key">Decel Phase</span><span class="info-val">${formatTime(t_total / 2)}</span></div>
-    <div class="info-row"><span class="info-key">Total Time</span><span class="info-val highlight">${formatTime(t_total)}</span></div>
+    <div class="info-row"><span class="info-key">Decel Phase</span><span class="info-val">${formatTime(displayTime / 2)}</span></div>
+    <div class="info-row"><span class="info-key">Total Time (${clockLabel})</span><span class="info-val highlight">${formatTime(displayTime)}</span></div>
+    ${state.relEffects ? `<div class="info-row"><span class="info-key">Station clock</span><span class="info-val">${formatTime(t_total)}</span></div>
+    <div class="info-row"><span class="info-key">Lorentz factor (g)</span><span class="info-val">${calc.gamma.toFixed(6)}</span></div>` : ''}
     <div class="info-row"><span class="info-key">Peak Velocity</span><span class="info-val">${(v_max / 1000).toFixed(0)} km/s</span></div>
     <div class="info-row"><span class="info-key">% of c</span><span class="info-val">${(beta * 100).toFixed(4)}%</span></div>
   </div>`;
@@ -1362,6 +1369,12 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'f' || e.key === 'F') toggleFlight();
   if (e.key === 'r' || e.key === 'R') { state.zoom = 1; state.panX = 0; state.panY = 0; }
 });
+
+function toggleRel() {
+  state.relEffects = !state.relEffects;
+  document.getElementById('btn-rel').classList.toggle('active', state.relEffects);
+  document.getElementById('timeline-label').textContent = state.relEffects ? 'SHIP CLOCK' : 'FLIGHT TIMELINE';
+}
 
 function toggleFactions() {
   state.showFactions = !state.showFactions;
