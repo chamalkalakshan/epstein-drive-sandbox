@@ -431,7 +431,7 @@
     <div class="help-grid">
       <div>
         <div class="help-row"><span class="help-key" style="min-width:60px;">Thrust</span><span class="help-desc">Acceleration in g-force. 0.33g is Rocinante cruise. Above 3g requires Juice.</span></div>
-        <div class="help-row"><span class="help-key" style="min-width:60px;">Isp</span><span class="help-desc">Specific impulse in seconds. Higher = more efficient engine. Epstein drives: 30,000-60,000s.</span></div>
+        <div class="help-row"><span class="help-key" style="min-width:60px;">Isp</span><span class="help-desc">Specific impulse in seconds. Higher = more efficient engine. Epstein drives: 100,000-500,000s estimated.</span></div>
       </div>
       <div>
         <div class="help-row"><span class="help-key" style="min-width:60px;">Fuel Ratio</span><span class="help-desc">Wet mass / dry mass. Higher ratio means more propellant and longer range.</span></div>
@@ -470,7 +470,7 @@
         <input type="range" id="sl-thrust" min="0.01" max="10" step="0.01" value="0.33">
       </div>
       <div class="ctrl-row">
-        <div class="ctrl-label"><span>Isp (s)</span><span class="ctrl-val" id="val-isp">300000</span></div>
+        <div class="ctrl-label"><span>Isp (s)</span><span class="ctrl-val" id="val-isp">300,000 s</span></div>
         <input type="range" id="sl-isp" min="5000" max="1000000" step="5000" value="300000">
       </div>
       <div class="ctrl-row">
@@ -497,7 +497,9 @@
   </div>
   <div id="right-sidebar">
     <div id="empty-panel">
-      Select an ORIGIN<br>then a DESTINATION<br>on the map to compute<br>an Epstein burn trajectory.
+      NAVCOMP READY<br><br>
+      Select an ORIGIN<br>then a DESTINATION<br>to plot an Epstein burn.<br><br>
+      <span style="font-size:10px;color:#404060;">All calculations based on<br>canonical Expanse travel times.</span>
     </div>
     <div id="flight-panel" style="display:none"></div>
   </div>
@@ -1662,7 +1664,7 @@ function restoreFromHash() {
     if (params.get('origin')) { state.origin = params.get('origin'); }
     if (params.get('dest')) { state.dest = params.get('dest'); }
     if (params.get('thrust')) { state.thrust = parseFloat(params.get('thrust')); document.getElementById('sl-thrust').value = state.thrust; document.getElementById('val-thrust').textContent = state.thrust.toFixed(2) + 'g'; }
-    if (params.get('isp')) { state.isp = parseInt(params.get('isp')); document.getElementById('sl-isp').value = state.isp; document.getElementById('val-isp').textContent = state.isp; }
+    if (params.get('isp')) { state.isp = parseInt(params.get('isp')); document.getElementById('sl-isp').value = state.isp; document.getElementById('val-isp').textContent = state.isp.toLocaleString() + ' s'; }
     if (params.get('dry')) { state.dry = parseInt(params.get('dry')); document.getElementById('sl-dry').value = state.dry; document.getElementById('val-dry').textContent = state.dry; }
     if (params.get('fuel')) { state.fuelRatio = parseFloat(params.get('fuel')); document.getElementById('sl-fuel').value = state.fuelRatio; document.getElementById('val-fuel').textContent = state.fuelRatio.toFixed(1) + 'x'; }
     if (params.get('year')) { state.year = parseInt(params.get('year')); document.getElementById('sl-year').value = state.year; document.getElementById('val-year').textContent = state.year; }
@@ -1727,7 +1729,7 @@ function applyPreset(name) {
   document.getElementById('sl-dry').value = p.dry;
   document.getElementById('sl-fuel').value = p.fuelRatio;
   document.getElementById('val-thrust').textContent = p.thrust.toFixed(2) + 'g';
-  document.getElementById('val-isp').textContent = p.isp;
+  document.getElementById('val-isp').textContent = p.isp.toLocaleString() + ' s';
   document.getElementById('val-dry').textContent = p.dry;
   document.getElementById('val-fuel').textContent = p.fuelRatio.toFixed(1) + 'x';
 }
@@ -1741,7 +1743,7 @@ document.getElementById('sl-thrust').addEventListener('input', e => {
 });
 document.getElementById('sl-isp').addEventListener('input', e => {
   state.isp = parseInt(e.target.value);
-  document.getElementById('val-isp').textContent = state.isp;
+  document.getElementById('val-isp').textContent = state.isp.toLocaleString() + ' s';
   document.getElementById('ship-preset').value = 'custom';
 });
 document.getElementById('sl-dry').addEventListener('input', e => {
