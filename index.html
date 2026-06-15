@@ -265,7 +265,7 @@
 <body>
 <div id="header">
   <h1>⚛ Epstein Drive Physics Sandbox</h1>
-  <div class="subtitle">"The Epstein drive changed everything." — Solomon Epstein, 2067</div>
+  <div class="subtitle">"The Epstein drive changed everything." - Solomon Epstein, 2067</div>
   <button class="btn" id="btn-orbits">▶ Animate Orbits</button>
   <button class="btn" id="btn-flight">▶ Simulate Flight</button>
   <button class="btn" id="btn-events" onclick="toggleEvents()">Expanse Events</button>
@@ -334,7 +334,7 @@
     <div id="timeline-fill"></div>
     <div id="timeline-ship"></div>
   </div>
-  <span id="elapsed">— not simulating —</span>
+  <span id="elapsed">not simulating</span>
 </div>
 
 <script>
@@ -823,7 +823,7 @@ function drawScene(now) {
   // Hint bar
   let hint = '';
   if (!state.origin) hint = 'Click a body to set ORIGIN · Scroll to zoom · Middle-drag to pan · [Space] animate orbits';
-  else if (!state.dest) hint = `Origin: ${BODIES.find(b=>b.id===state.origin).name} — Click another body for DESTINATION · [Esc] clear`;
+  else if (!state.dest) hint = `Origin: ${BODIES.find(b=>b.id===state.origin).name} - Click another body for DESTINATION · [Esc] clear`;
   else {
     const on = BODIES.find(b=>b.id===state.origin).name;
     const dn = BODIES.find(b=>b.id===state.dest).name;
@@ -940,7 +940,7 @@ function updateFlightPanel() {
     if (g < 1.3) return 'Earth-normal';
     if (g < 3.0) return 'High-g exhausting';
     if (g < 7.0) return 'Needs Juice';
-    return 'Combat burn — lethal';
+    return 'Combat burn - lethal';
   })();
 
   const juiceNeeded = state.thrust > 3;
@@ -1425,7 +1425,7 @@ document.addEventListener('keydown', (e) => {
     state.origin = null; state.dest = null;
     state.flightAnim = false; state.flightT = 0;
     updateTimeline(0);
-    document.getElementById('elapsed').textContent = '— not simulating —';
+    document.getElementById('elapsed').textContent = 'not simulating';
     document.getElementById('btn-flight').classList.remove('active');
     document.getElementById('btn-flight').textContent = '▶ Simulate Flight';
     document.getElementById('empty-panel').style.display = 'block';
