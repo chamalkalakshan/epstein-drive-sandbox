@@ -7,6 +7,10 @@ I’m a huge fan of The Expanse, so I built this as a fun way to explore Epstein
 
 Or open `index.html` in any modern browser to run locally. No install or server required.
 
+## Screenshot
+
+![Epstein Drive Physics Sandbox](screenshot.png)
+
 ## Features
 
 ### Solar System Map
@@ -60,6 +64,3 @@ Or open `index.html` in any modern browser to run locally. No install or server 
 - Esc: clear current route
 - R: reset zoom and pan
 
-## Screenshot
-
-![Epstein Drive Physics Sandbox](screenshot.png)
