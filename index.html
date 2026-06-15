@@ -864,6 +864,21 @@ function updateFlightPanel() {
     <canvas id="vel-chart" width="260" height="100" style="display:block;background:#06060D;border:1px solid #1E2030;margin-top:4px;"></canvas>
   </div>`;
 
+  const GM_BODIES = { earth:3.986e14, luna:3.986e14, mars:4.282e13, jupiter:1.267e17, ganymede:1.267e17, europa:1.267e17, saturn:3.793e16, titan:3.793e16, uranus:5.794e15, neptune:6.836e15 };
+  const gm_dest = GM_BODIES[calc.db.id] || 1e12;
+  const park_alt = 200e3; // 200km
+  const r_body_approx = 6.4e6; // avg radius placeholder
+  const r_orbit = r_body_approx + park_alt;
+  const v_circ = Math.sqrt(gm_dest / r_orbit);
+  const dv_insert = Math.abs(calc.v_max - v_circ);
+  const total_mission_dv = calc.dv_total + dv_insert;
+  html += `<div class="panel-section"><h3>Orbital Insertion</h3>
+    <div class="info-row"><span class="info-key">Circular orbit vel</span><span class="info-val">${(v_circ/1000).toFixed(2)} km/s</span></div>
+    <div class="info-row"><span class="info-key">Capture burn dv</span><span class="info-val">${(dv_insert/1000).toFixed(2)} km/s</span></div>
+    <div class="info-row"><span class="info-key">Parking orbit alt</span><span class="info-val">200 km</span></div>
+    <div class="info-row"><span class="info-key">Total mission dv</span><span class="info-val highlight">${(total_mission_dv/1000).toFixed(1)} km/s</span></div>
+  </div>`;
+
   const lightLag = calc.dist_m / C;
   const lagClass = lightLag > 60 ? 'warn' : 'ok';
   const lagNote = lightLag > 60 ? 'Real-time comms impossible' : 'Near-real-time';
