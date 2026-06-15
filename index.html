@@ -470,16 +470,16 @@
         <input type="range" id="sl-thrust" min="0.01" max="10" step="0.01" value="0.33">
       </div>
       <div class="ctrl-row">
-        <div class="ctrl-label"><span>Isp (s)</span><span class="ctrl-val" id="val-isp">50000</span></div>
-        <input type="range" id="sl-isp" min="5000" max="100000" step="1000" value="50000">
+        <div class="ctrl-label"><span>Isp (s)</span><span class="ctrl-val" id="val-isp">300000</span></div>
+        <input type="range" id="sl-isp" min="5000" max="1000000" step="5000" value="300000">
       </div>
       <div class="ctrl-row">
         <div class="ctrl-label"><span>Dry Mass (t)</span><span class="ctrl-val" id="val-dry">80</span></div>
         <input type="range" id="sl-dry" min="10" max="5000" step="10" value="80">
       </div>
       <div class="ctrl-row">
-        <div class="ctrl-label"><span>Fuel Ratio</span><span class="ctrl-val" id="val-fuel">5.0x</span></div>
-        <input type="range" id="sl-fuel" min="1.1" max="20" step="0.1" value="5">
+        <div class="ctrl-label"><span>Fuel Ratio</span><span class="ctrl-val" id="val-fuel">8.0x</span></div>
+        <input type="range" id="sl-fuel" min="1.1" max="50" step="0.1" value="8">
       </div>
       <div class="ctrl-row">
         <div class="ctrl-label"><span>Year</span><span class="ctrl-val" id="val-year">2350</span></div>
@@ -539,11 +539,11 @@ const BODIES = [
 ];
 
 const SHIPS = {
-  rocinante: { thrust:0.33, isp:50000, dry:80,   fuelRatio:5 },
-  donnager:  { thrust:0.2,  isp:45000, dry:2000, fuelRatio:3 },
-  cant:      { thrust:0.1,  isp:30000, dry:500,  fuelRatio:2 },
-  razorback: { thrust:0.5,  isp:60000, dry:20,   fuelRatio:4 },
-  custom:    { thrust:0.3,  isp:50000, dry:100,  fuelRatio:3 },
+  rocinante: { thrust:0.33, isp:300000, dry:80,   fuelRatio:8  },
+  donnager:  { thrust:0.2,  isp:250000, dry:2000, fuelRatio:6  },
+  cant:      { thrust:0.1,  isp:120000, dry:500,  fuelRatio:4  },
+  razorback: { thrust:0.5,  isp:500000, dry:20,   fuelRatio:10 },
+  custom:    { thrust:0.3,  isp:300000, dry:100,  fuelRatio:8  },
 };
 
 const FACTION_COLORS = { un:'#4A90E2', mcrn:'#C1440E', opa:'#E8A030', ring:'#BB44FF' };
@@ -559,9 +559,9 @@ const LORE_EVENTS = [
 let state = {
   year: 2350,
   thrust: 0.33,
-  isp: 50000,
+  isp: 300000,
   dry: 80,
-  fuelRatio: 5,
+  fuelRatio: 8,
   origin: null,
   dest: null,
   waypoints: [],
